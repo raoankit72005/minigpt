@@ -1,4 +1,68 @@
-# MiniGPT — Character-Level Language Model from Scratch
+# MiniGPT — From Scratch and Pretrained GPT-2
+
+This repository contains two separate workflows: a small character-level GPT trained from scratch, and a GPT-2-compatible PyTorch model that loads OpenAI's released GPT-2 small weights.
+
+## Use pretrained GPT-2 (124M)
+
+[![Open pretrained GPT-2 in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/raoankit72005/minigpt/blob/main/GPT2_Pretrained_Colab.ipynb)
+
+The pretrained workflow uses `openai-community/gpt2`, the GPT-2 BPE tokenizer, 12 Transformer layers, 12 attention heads, 768-dimensional embeddings, and a 1,024-token context. It runs inference through our explicit PyTorch implementation rather than a Transformers forward pass.
+
+Your original character-level model has a different vocabulary and tensor shapes, so GPT-2 weights cannot be loaded into it. Its training notebook remains available below.
+
+### Local setup and generation
+
+Use Python 3.10 or newer in a virtual environment, clone this repository, and run:
+
+```bash
+python -m pip install -r requirements.txt
+python gpt2_pretrained.py --prompt "Every effort moves you" --max-new-tokens 100
+```
+
+The first run downloads about 500 MB of model weights plus tokenizer files into `checkpoints/`. Internet access is needed for that download. No paid inference API or API key is required. CPU is supported; CUDA is selected automatically when available. Loading temporarily holds both the reference and custom model in CPU memory, so allow several GB of free RAM.
+
+The loader copies all pretrained parameters with shape checks, transposes GPT-2's Conv1D weights into PyTorch Linear layout, ties output and token embeddings, and verifies logits against the downloaded reference model before generation. The custom model uses the GPT-2 tanh GELU approximation and LayerNorm epsilon.
+
+```bash
+# Force CPU and save a converted local checkpoint
+python gpt2_pretrained.py --device cpu --save checkpoints/gpt2.pt
+
+# Run offline mapping, causal masking, and generation checks
+python -m unittest -v test_gpt2_pretrained.py
+```
+
+The Colab notebook includes saving/restoring a converted checkpoint and tokenizer. Large model files are downloaded at runtime and ignored by Git; they are not committed to this repository. The CLI loads the original Hugging Face checkpoint from the cache on subsequent runs; `--save` exports a custom checkpoint, not a CLI resume option.
+
+GPT-2 produces text continuations. It is not instruction-tuned, and loading these weights does not turn it into a ChatGPT-style assistant. This implementation focuses on inference with unpadded inputs; it has no KV cache and recomputes the active context for each generated token.
+
+### Pretrained workflow files
+
+| File | Purpose |
+| --- | --- |
+| `gpt2_pretrained.py` | GPT-2 architecture, explicit weight mapping, parity check, and generation CLI |
+| `GPT2_Pretrained_Colab.ipynb` | Download, generate, save, and restore in Colab |
+| `test_gpt2_pretrained.py` | Offline tests against a small randomly initialized Transformers GPT-2 |
+| `requirements.txt` | Dependencies for both workflows |
+
+### Validation
+
+The four offline tests passed: logits match the Transformers reference at multiple sequence lengths, causal masking prevents future-token leakage, incompatible tensor shapes are rejected, and generation handles the context boundary.
+
+The actual GPT-2 small safetensors checkpoint was downloaded and loaded during validation. Its mapped logits passed the reference comparison. A CPU generation smoke test with prompt `Machine learning is`, seed 42, temperature 0.8, top-k 40, and 10 new tokens produced:
+
+> Machine learning is more than just a tool. It has more than
+
+This is a generation smoke test, not a task-quality benchmark.
+
+### Reference and attribution
+
+The weight-loading approach follows [Sebastian Raschka's LLMs-from-scratch, Chapter 5 alternative weight loading](https://github.com/rasbt/LLMs-from-scratch/tree/main/ch05/02_alternative_weight_loading): copy embeddings and normalization parameters, transpose projection weights, and preserve GPT-2's output embeddings.
+
+Weights and model documentation: [OpenAI GPT-2 on Hugging Face](https://huggingface.co/openai-community/gpt2). Respect the model and dependency licenses. This is a pretrained-weight integration, not a claim that this project trained GPT-2.
+
+---
+
+# Original experiment — Character-Level Language Model from Scratch
 
 A self-contained PyTorch experiment that trains a small decoder-only Transformer from random initialization on **Tiny Shakespeare**. The notebook implements tokenization, causal attention, training, text generation, checkpointing, and held-out evaluation.
 
