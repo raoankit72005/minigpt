@@ -5,3 +5,4 @@ matplotlib>=3.7,<4
 peft==0.18.1
 accelerate>=1.0,<2
 requests>=2.31,<3
+gradio==5.49.1

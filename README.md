@@ -2,6 +2,21 @@
 
 This repository contains three workflows: a small character-level GPT trained from scratch, a custom GPT-2 model that loads OpenAI's released weights, and LoRA fine-tuning for business-email writing.
 
+## Web demo and deployment
+
+Run the email-writing interface locally:
+
+```bash
+python -m pip install -r requirements.txt
+python app.py
+```
+
+Open `http://localhost:7860`. The app loads the included adapter and downloads GPT-2 on first generation. Requests are queued one at a time with bounded request/output lengths. CPU and CUDA are supported; training is not required.
+
+For Hugging Face Spaces, create a public **Gradio** Space and upload `app.py`, `requirements.txt`, and the entire `email_adapter/` directory. Copy `SPACE_README.md` to the Space as `README.md` so its YAML selects the SDK and entry point. Consult current Spaces pricing before provisioning compute. Hosting account access is required; GitHub access alone does not publish a Space.
+
+This is an experimental email-drafting demo. The interface explains the checkpoint's observed limitations. A live URL has not yet been provisioned.
+
 ## Email-writing fine-tuning
 
 [![Fine-tune emails in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/raoankit72005/minigpt/blob/main/GPT2_Email_Finetuning_Colab.ipynb)
