@@ -1,0 +1,95 @@
+{
+  "base_model": "openai-community/gpt2",
+  "dataset": "Kamisori-daijin/email-datasets-20k",
+  "data_sha256": "349c6afd429f2d55eaaece9794ee0a9d625771e4369c8fb45c5e8392f6af31c7",
+  "device": "cpu",
+  "config": {
+    "data": "/tmp/email-datasets-20k-v2.jsonl",
+    "output": "outputs/email-initial",
+    "cache_dir": "/tmp/minigpt-weights",
+    "train_examples": 512,
+    "eval_examples": 32,
+    "epochs": 2,
+    "batch_size": 2,
+    "accumulation": 4,
+    "max_length": 384,
+    "learning_rate": 0.0002,
+    "seed": 42,
+    "threads": 4,
+    "resume_adapter": null
+  },
+  "optimizer_steps": 128,
+  "examples": {
+    "train": 512,
+    "val": 32,
+    "test": 32
+  },
+  "groups": {
+    "train": [
+      "announcing a company pivot",
+      "apologizing for a server outage",
+      "asking for a referral",
+      "correcting a hallucination in a previous report",
+      "declining a feature request",
+      "discussing quarterly performance",
+      "explaining a delay in shipping",
+      "giving feedback on a prototype",
+      "inviting to a beta testing program",
+      "notifying about a price change",
+      "pitching a new ai integration",
+      "proposing a joint webinar",
+      "reporting a critical security vulnerability",
+      "reporting a toxic workplace incident",
+      "requesting a deadline extension",
+      "requesting a mental health day",
+      "resolving a billing dispute",
+      "responding to an ai-generated deepfake scandal",
+      "scheduling a follow-up interview",
+      "terminating a contract",
+      "welcoming a new high-profile hire"
+    ],
+    "val": [
+      "negotiating a partnership deal",
+      "requesting a testimonial"
+    ],
+    "test": [
+      "proposing a 4-day work week trial",
+      "requesting a budget increase"
+    ]
+  },
+  "baseline_validation": {
+    "response_loss": 3.2701854585851513,
+    "response_perplexity": 26.316219459549675,
+    "tokens": 5883
+  },
+  "baseline_test": {
+    "response_loss": 3.360999327606741,
+    "response_perplexity": 28.817975092498052,
+    "tokens": 5484
+  },
+  "best_validation_loss": 2.53910347342633,
+  "finetuned_test": {
+    "response_loss": 2.5126416061500145,
+    "response_perplexity": 12.337477809674196,
+    "tokens": 5484
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "step": 64,
+      "response_loss": 2.729804798796046,
+      "response_perplexity": 15.329894314000217,
+      "tokens": 5883
+    },
+    {
+      "epoch": 2,
+      "step": 128,
+      "response_loss": 2.53910347342633,
+      "response_perplexity": 12.66830840304618,
+      "tokens": 5883
+    }
+  ],
+  "training_seconds": 881.2055275809998,
+  "trainable_parameters": 294912,
+  "dataset_revision": "7c615780b64770697e8e517c9d3e70db470cadf1"
+}

@@ -1,6 +1,76 @@
 # MiniGPT — From Scratch and Pretrained GPT-2
 
-This repository contains two separate workflows: a small character-level GPT trained from scratch, and a GPT-2-compatible PyTorch model that loads OpenAI's released GPT-2 small weights.
+This repository contains three workflows: a small character-level GPT trained from scratch, a custom GPT-2 model that loads OpenAI's released weights, and LoRA fine-tuning for business-email writing.
+
+## Email-writing fine-tuning
+
+[![Fine-tune emails in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/raoankit72005/minigpt/blob/main/GPT2_Email_Finetuning_Colab.ipynb)
+
+This workflow uses GPT-2 with **response-only LoRA fine-tuning** on synthetic business-email pairs. Training uses the Transformers GPT-2 implementation, which supplies the training behavior and dropout omitted from the custom inference model. The trained adapter can also be merged and mapped back into the custom PyTorch model.
+
+### Initial training run completed
+
+The included adapter was actually trained on **512 emails for two epochs (128 optimizer updates)** on CPU, with rank-8 LoRA and 294,912 trainable parameters.
+
+| Held-out metric | Base GPT-2 | Fine-tuned |
+| --- | --- | --- |
+| Test response loss | 3.3610 | 2.5126 |
+| Test response perplexity | 28.82 | 12.34 |
+| Validation response perplexity | 26.32 | 12.67 |
+
+Validation and test each contain 32 emails drawn from separate held-out purpose groups. These small, synthetic-data measurements demonstrate improved dataset likelihood, not reliable writing quality.
+
+**Observed limitations:** outputs became more email-like, but still invented facts, mixed sender/recipient roles, and included stray markup. A fresh professor-email request produced an invented phone number. This is an experimental checkpoint, not a finished email assistant. The repository includes the actual outputs so the improvement and remaining problems are reviewable.
+
+### Use the included trained adapter
+
+```bash
+python -m pip install -r requirements.txt
+python write_email.py --adapter email_adapter --request "Write a polite email requesting a project meeting next week."
+```
+
+The small LoRA adapter is included in `email_adapter/`; the original GPT-2 base weights download on first use. The adapter alone is not a complete model. Generation uses the same Request/Email format as training and produces an email draft for review.
+
+### Train a larger run
+
+```bash
+python finetune_email.py --train-examples 5000 --eval-examples 200 --epochs 2 --output outputs/email-lora
+python write_email.py --adapter outputs/email-lora/best --request "Write a formal email asking for a project status update."
+```
+
+Use the new Colab notebook for GPU training. It includes saving to Google Drive, measured baseline/fine-tuned comparisons, inference, and adapter download.
+
+To continue from the included adapter, add `--resume-adapter email_adapter`. This loads its weights and starts a **fresh optimizer**; it does not reproduce uninterrupted training. The `best/` adapter is selected using validation response loss; `last/` retains the final epoch's weights.
+
+### Data and evaluation
+
+Dataset: [Kamisori-daijin/email-datasets-20k](https://huggingface.co/datasets/Kamisori-daijin/email-datasets-20k), pinned to revision `7c615780b64770697e8e517c9d3e70db470cadf1`. Its card lists Apache 2.0 and asks users to refer to the Gemma usage terms. The dataset contains synthetic business emails generated with Gemma; it does not provide broad coverage of academic applications or formal letters.
+
+Preprocessing parses subject/body, repairs escaped newlines, removes duplicate responses, and skips malformed/overlength records. All examples for the same parsed email purpose stay together in one split. This reduces template leakage, but is not a comprehensive semantic near-duplicate audit. Prompt and padding labels are masked with `-100`; loss is computed on response tokens only.
+
+Metrics are token-weighted held-out **response** cross-entropy and perplexity. They measure likelihood on this dataset, not factual accuracy, suitability, or comprehensive writing quality. Read `email_training_results/samples.json` for actual before/after outputs and test fresh requests yourself.
+
+### Export merged weights for the custom model
+
+```bash
+python write_email.py --adapter email_adapter --export-custom outputs/email-gpt2.pt
+```
+
+The export merges the LoRA adapter into GPT-2, maps it into the custom model, and checks logits against the merged reference. The resulting checkpoint is roughly 500 MB and should stay outside Git.
+
+### Files
+
+| File | Purpose |
+| --- | --- |
+| `finetune_email.py` | Dataset preparation, grouped splits, masked-loss LoRA training, checkpoint selection, and evaluation |
+| `write_email.py` | Trained-adapter inference and optional custom-model export |
+| `GPT2_Email_Finetuning_Colab.ipynb` | GPU training and inference notebook |
+| `email_adapter/` | Initial trained adapter and its model card |
+| `email_training_results/` | Measured results and before/after samples |
+| `test_email_pipeline.py` | Response-mask, padding, and split-isolation tests |
+
+Run checks with `python -m unittest -v test_email_pipeline.py test_gpt2_pretrained.py`.
+
 
 ## Use pretrained GPT-2 (124M)
 
@@ -42,7 +112,7 @@ GPT-2 produces text continuations. It is not instruction-tuned, and loading thes
 | `gpt2_pretrained.py` | GPT-2 architecture, explicit weight mapping, parity check, and generation CLI |
 | `GPT2_Pretrained_Colab.ipynb` | Download, generate, save, and restore in Colab |
 | `test_gpt2_pretrained.py` | Offline tests against a small randomly initialized Transformers GPT-2 |
-| `requirements.txt` | Dependencies for both workflows |
+| `requirements.txt` | Dependencies for all workflows |
 
 ### Validation
 

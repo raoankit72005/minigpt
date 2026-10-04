@@ -1,0 +1,16 @@
+[
+  {
+    "epoch": 1,
+    "step": 64,
+    "response_loss": 2.729804798796046,
+    "response_perplexity": 15.329894314000217,
+    "tokens": 5883
+  },
+  {
+    "epoch": 2,
+    "step": 128,
+    "response_loss": 2.53910347342633,
+    "response_perplexity": 12.66830840304618,
+    "tokens": 5883
+  }
+]

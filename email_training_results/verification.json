@@ -1,0 +1,7 @@
+{
+  "adapter_reload": "passed",
+  "merged_custom_logits": "passed",
+  "rtol": 0.0001,
+  "atol": 0.0001,
+  "tests_passed": 6
+}
